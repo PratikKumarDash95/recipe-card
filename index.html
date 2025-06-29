@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlavorCraft - Interactive Recipe Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2rem;
+        }
+
+        .recipe-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .recipe-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .recipe-card:nth-child(1) { animation-delay: 0.1s; }
+        .recipe-card:nth-child(2) { animation-delay: 0.2s; }
+        .recipe-card:nth-child(3) { animation-delay: 0.3s; }
+        .recipe-card:nth-child(4) { animation-delay: 0.4s; }
+        .recipe-card:nth-child(5) { animation-delay: 0.5s; }
+        .recipe-card:nth-child(6) { animation-delay: 0.6s; }
+        .recipe-card:nth-child(7) { animation-delay: 0.7s; }
+        .recipe-card:nth-child(8) { animation-delay: 0.8s; }
+        .recipe-card:nth-child(9) { animation-delay: 0.9s; }
+        .recipe-card:nth-child(10) { animation-delay: 1.0s; }
+
+        .recipe-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+
+        .recipe-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .recipe-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .recipe-card:hover .recipe-image::before {
+            left: 100%;
+        }
+
+        .recipe-content {
+            padding: 25px;
+        }
+
+        .recipe-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .recipe-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .recipe-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .recipe-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .modal-header {
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .ingredients-section, .instructions-section {
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .section-header:hover {
+            background-color: #f8f9fa;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .toggle-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .section-content.active {
+            max-height: 1000px;
+        }
+
+        .ingredients-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .ingredient-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .ingredient-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .instructions-list {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+
+        .instruction-step {
+            counter-increment: step-counter;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .instruction-step::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: -20px;
+            top: 15px;
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .instruction-step:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .instruction-step.active {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .instruction-step.active::before {
+            background: #ffc107;
+        }
+
+        .cooking-controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .timer {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #667eea;
+            min-width: 100px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .recipe-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .modal-content {
+                margin: 20px;
+                max-height: calc(100vh - 40px);
+            }
+
+            .modal-header,
+            .modal-body {
+                padding: 20px;
+            }
+
+            .cooking-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .recipe-actions {
+                flex-direction: column;
+            }
+        }
+
+        #nextStepBtn {
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            .recipe-content {
+                padding: 20px;
+            }
+
+            .recipe-meta {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>FlavorCraft</h1>
+            <p>Discover amazing recipes with interactive cooking guides</p>
+        </div>
+
+        <div class="recipe-grid" id="recipeGrid">
+            <!-- Recipes will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Recipe Modal -->
+    <div class="modal" id="recipeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2 id="modalTitle">Recipe Title</h2>
+                <div class="recipe-meta">
+                    <span id="modalTime">⏱️ 30 mins</span>
+                    <span id="modalServings">👥 4 servings</span>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="ingredients-section">
+                    <div class="section-header" onclick="toggleSection('ingredients')">
+                        <h3 class="section-title">Ingredients</h3>
+                        <span class="toggle-icon" id="ingredientsToggle">▼</span>
+                    </div>
+                    <div class="section-content" id="ingredientsContent">
+                        <ul class="ingredients-list" id="ingredientsList">
+                            <!-- Ingredients will be populated by JavaScript -->
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="instructions-section">
+                    <div class="section-header" onclick="toggleSection('instructions')">
+                        <h3 class="section-title">Instructions</h3>
+                        <span class="toggle-icon" id="instructionsToggle">▼</span>
+                    </div>
+                    <div class="section-content" id="instructionsContent">
+                        <ol class="instructions-list" id="instructionsList">
+                            <!-- Instructions will be populated by JavaScript -->
+                        </ol>
+                    </div>
+                    <button class="btn btn-secondary" id="nextStepBtn" onclick="nextStep()">Next Step</button>
+
+                <div class="cooking-controls">
+                    <button class="btn btn-primary" id="startCookingBtn" onclick="startCooking()">Start Cooking</button>
+                    <button class="btn btn-secondary" id="nextStepBtn" onclick="nextStep()">Next Step</button>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="timer" id="timer">00:00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const recipes = [
+            {
+                id: 1,
+                title: "Chocolate Lava Cake",
+                time: "25 mins",
+                servings: "2 servings",
+                emoji: "🍰",
+                description: "Rich, decadent chocolate cake with a molten center that flows like lava when cut.",
+                ingredients: [
+                    "4 oz dark chocolate, chopped",
+                    "4 tbsp unsalted butter",
+                    "2 large eggs",
+                    "2 tbsp granulated sugar",
+                    "2 tbsp all-purpose flour",
+                    "Pinch of salt",
+                    "Butter for ramekins",
+                    "Cocoa powder for dusting"
+                ],
+                instructions: [
+                    "Preheat oven to 425°F. Butter two 6-oz ramekins and dust with cocoa powder.",
+                    "Melt chocolate and butter in a double boiler until smooth. Let cool slightly.",
+                    "Whisk eggs and sugar until pale and thick, about 2 minutes.",
+                    "Fold in the chocolate mixture, then gently fold in flour and salt.",
+                    "Divide batter between ramekins and place on a baking sheet.",
+                    "Bake for 12-14 minutes until edges are firm but center jiggles slightly.",
+                    "Let cool for 1 minute, then run a knife around edges and invert onto plates.",
+                    "Serve immediately with vanilla ice cream or powdered sugar."
+                ]
+            },
+            {
+                id: 2,
+                title: "Margherita Pizza",
+                time: "45 mins",
+                servings: "4 servings",
+                emoji: "🍕",
+                description: "Classic Italian pizza with fresh mozzarella, basil, and tomato sauce on a crispy crust.",
+                ingredients: [
+                    "1 lb pizza dough",
+                    "1/2 cup pizza sauce",
+                    "8 oz fresh mozzarella, sliced",
+                    "1/4 cup fresh basil leaves",
+                    "2 tbsp olive oil",
+                    "1 tsp sea salt",
+                    "1/4 tsp black pepper",
+                    "Semolina flour for dusting"
+                ],
+                instructions: [
+                    "Preheat oven to 500°F with pizza stone inside for 30 minutes.",
+                    "Roll out pizza dough on floured surface to 12-inch circle.",
+                    "Transfer dough to parchment paper dusted with semolina.",
+                    "Spread pizza sauce evenly, leaving 1-inch border for crust.",
+                    "Arrange mozzarella slices over sauce, not overlapping.",
+                    "Drizzle with olive oil and season with salt and pepper.",
+                    "Slide pizza onto hot stone and bake 10-12 minutes until golden.",
+                    "Remove from oven, top with fresh basil, slice and serve hot."
+                ]
+            },
+            {
+                id: 3,
+                title: "Chicken Tikka Masala",
+                time: "60 mins",
+                servings: "6 servings",
+                emoji: "🍛",
+                description: "Tender chicken in a creamy, spiced tomato sauce - a beloved Indian-inspired dish.",
+                ingredients: [
+                    "2 lbs chicken breast, cubed",
+                    "1 cup plain yogurt",
+                    "2 tbsp tikka masala spice blend",
+                    "1 onion, diced",
+                    "4 cloves garlic, minced",
+                    "1 tbsp ginger, minced",
+                    "1 can crushed tomatoes",
+                    "1 cup heavy cream",
+                    "2 tbsp ghee or oil",
+                    "Salt to taste",
+                    "Fresh cilantro for garnish"
+                ],
+                instructions: [
+                    "Marinate chicken in yogurt and half the spice blend for 30 minutes.",
+                    "Heat ghee in large pan and cook marinated chicken until browned.",
+                    "Remove chicken and sauté onion until golden, about 5 minutes.",
+                    "Add garlic, ginger, and remaining spices, cook 1 minute.",
+                    "Add crushed tomatoes and simmer 10 minutes until thickened.",
+                    "Stir in cream and return chicken to pan.",
+                    "Simmer 15 minutes until chicken is cooked through.",
+                    "Garnish with cilantro and serve with basmati rice."
+                ]
+            },
+            {
+                id: 4,
+                title: "Caesar Salad",
+                time: "15 mins",
+                servings: "4 servings",
+                emoji: "🥗",
+                description: "Crisp romaine lettuce with creamy Caesar dressing, parmesan, and crunchy croutons.",
+                ingredients: [
+                    "2 heads romaine lettuce, chopped",
+                    "1/2 cup mayonnaise",
+                    "2 tbsp lemon juice",
+                    "2 cloves garlic, minced",
+                    "1 tsp Worcestershire sauce",
+                    "1/2 cup parmesan cheese, grated",
+                    "1 cup croutons",
+                    "2 anchovy fillets (optional)",
+                    "Black pepper to taste"
+                ],
+                instructions: [
+                    "Wash and dry romaine lettuce thoroughly, then chop into bite-sized pieces.",
+                    "In a small bowl, whisk together mayonnaise, lemon juice, and garlic.",
+                    "Add Worcestershire sauce and minced anchovies if using.",
+                    "Season dressing with black pepper and half the parmesan.",
+                    "Place lettuce in large serving bowl and toss with dressing.",
+                    "Add croutons and remaining parmesan cheese.",
+                    "Toss gently to coat all ingredients evenly.",
+                    "Serve immediately with additional parmesan and black pepper."
+                ]
+            },
+            {
+                id: 5,
+title: "Chicken 65",
+time: "40 mins",
+servings: "4 servings",
+emoji: "🍗",
+description: "Crispy fried chicken bites tossed in spicy sauce, a South Indian classic.",
+ingredients: [
+    "500g boneless chicken pieces",
+    "2 tbsp cornflour",
+    "2 tbsp all-purpose flour",
+    "1 tsp red chili powder",
+    "1/2 tsp turmeric powder",
+    "1 tbsp ginger-garlic paste",
+    "Salt to taste",
+    "Oil for deep frying",
+    "1 tbsp yogurt",
+    "10 curry leaves",
+    "2 green chilies, slit",
+    "1 small onion, chopped",
+    "1 tsp vinegar or lemon juice"
+],
+instructions: [
+    "Marinate chicken with chili powder, turmeric, salt, ginger-garlic paste, yogurt, and flours.",
+    "Let it rest for 30 minutes.",
+    "Heat oil in deep pan and fry chicken pieces till golden and crisp.",
+    "Drain and set aside.",
+    "In another pan, heat 1 tbsp oil, sauté onions, curry leaves, and green chilies.",
+    "Add fried chicken, vinegar or lemon juice, and toss everything well.",
+    "Cook for 2–3 minutes and serve hot."
+]
+
+            },
+            {
+                id: 6,
+                title: "Spaghetti Carbonara",
+                time: "20 mins",
+                servings: "4 servings",
+                emoji: "🍝",
+                description: "Classic Roman pasta dish with eggs, cheese, pancetta, and black pepper.",
+                ingredients: [
+                    "1 lb spaghetti",
+                    "6 oz pancetta, diced",
+                    "4 large eggs",
+                    "1 cup Pecorino Romano cheese, grated",
+                    "1 tsp black pepper, freshly ground",
+                    "Salt for pasta water",
+                    "2 tbsp olive oil",
+                    "2 cloves garlic, minced"
+                ],
+                instructions: [
+                    "Bring large pot of salted water to boil and cook spaghetti al dente.",
+                    "While pasta cooks, render pancetta in large skillet until crispy.",
+                    "In bowl, whisk eggs with cheese and black pepper until smooth.",
+                    "Reserve 1 cup pasta water before draining spaghetti.",
+                    "Add hot pasta to skillet with pancetta and toss.",
+                    "Remove from heat and quickly stir in egg mixture.",
+                    "Add pasta water gradually to create creamy sauce.",
+                    "Serve immediately with extra cheese and black pepper."
+                ]
+            },
+            {
+                id: 7,
+                title: "Chicken Stir Fry",
+                time: "25 mins",
+                servings: "4 servings",
+                emoji: "🥘",
+                description: "Quick and healthy stir-fry with tender chicken and crisp vegetables in savory sauce.",
+                ingredients: [
+                    "1 lb chicken breast, sliced thin",
+                    "2 cups mixed vegetables (bell peppers, broccoli, carrots)",
+                    "3 tbsp soy sauce",
+                    "2 tbsp oyster sauce",
+                    "1 tbsp cornstarch",
+                    "2 tbsp vegetable oil",
+                    "3 cloves garlic, minced",
+                    "1 tbsp ginger, minced",
+                    "2 green onions, sliced",
+                    "1 tsp sesame oil"
+                ],
+                instructions: [
+                    "Marinate sliced chicken in 1 tbsp soy sauce and cornstarch for 15 minutes.",
+                    "Heat oil in wok or large skillet over high heat.",
+                    "Stir-fry chicken until cooked through, about 4-5 minutes.",
+                    "Remove chicken and add vegetables to same pan.",
+                    "Stir-fry vegetables for 3-4 minutes until crisp-tender.",
+                    "Add garlic and ginger, cook for 30 seconds until fragrant.",
+                    "Return chicken to pan with remaining soy sauce and oyster sauce.",
+                    "Finish with sesame oil and green onions, serve over rice."
+                ]
+            },
+            {
+                id: 8,
+                title: "Banana Pancakes",
+                time: "20 mins",
+                servings: "3 servings",
+                emoji: "🥞",
+                description: "Fluffy pancakes with mashed banana for natural sweetness and incredible flavor.",
+                ingredients: [
+                    "2 ripe bananas, mashed",
+                    "2 cups all-purpose flour",
+                    "2 tbsp sugar",
+                    "2 tsp baking powder",
+                    "1/2 tsp salt",
+                    "1 3/4 cups milk",
+                    "2 large eggs",
+                    "1/4 cup melted butter",
+                    "1 tsp vanilla extract",
+                    "Butter for cooking",
+                    "Maple syrup for serving"
+                ],
+                instructions: [
+                    "In large bowl, whisk together flour, sugar, baking powder, and salt.",
+                    "In separate bowl, combine mashed bananas, milk, eggs, melted butter, and vanilla.",
+                    "Pour wet ingredients into dry ingredients and stir until just combined.",
+                    "Don't overmix - lumps are okay for fluffy pancakes.",
+                    "Heat griddle or large skillet over medium heat and butter lightly.",
+                    "Pour 1/4 cup batter for each pancake onto hot griddle.",
+                    "Cook until bubbles form on surface, then flip and cook until golden.",
+                    "Serve hot with butter and maple syrup."
+                ]
+            },
+            {
+                id: 9,
+                title: "Greek Salad",
+                time: "15 mins",
+                servings: "6 servings",
+                emoji: "🫒",
+                description: "Fresh Mediterranean salad with tomatoes, cucumbers, olives, and feta cheese.",
+                ingredients: [
+                    "4 large tomatoes, cut into wedges",
+                    "2 cucumbers, sliced thick",
+                    "1 red onion, thinly sliced",
+                    "1 cup Kalamata olives",
+                    "8 oz feta cheese, cubed",
+                    "1/4 cup olive oil",
+                    "2 tbsp red wine vinegar",
+                    "1 tsp dried oregano",
+                    "Salt and pepper to taste",
+                    "Fresh parsley for garnish"
+                ],
+                instructions: [
+                    "Cut tomatoes into wedges and place in large serving bowl.",
+                    "Add sliced cucumbers and red onion to bowl.",
+                    "Scatter Kalamata olives and feta cheese over vegetables.",
+                    "In small bowl, whisk olive oil, vinegar, and oregano.",
+                    "Season dressing with salt and pepper to taste.",
+                    "Pour dressing over salad and toss gently to combine.",
+                    "Let salad sit for 10 minutes to allow flavors to meld.",
+                    "Garnish with fresh parsley and serve at room temperature."
+                ]
+            },
+            {
+                id: 10,
+                title: "Chocolate Chip Cookies",
+                time: "35 mins",
+                servings: "24 cookies",
+                emoji: "🍪",
+                description: "Classic homemade cookies with plenty of chocolate chips and a perfect chewy texture.",
+                ingredients: [
+                    "2 1/4 cups all-purpose flour",
+                    "1 tsp baking soda",
+                    "1 tsp salt",
+                    "1 cup butter, softened",
+                    "3/4 cup granulated sugar",
+                    "3/4 cup brown sugar, packed",
+                    "2 large eggs",
+                    "2 tsp vanilla extract",
+                    "2 cups chocolate chips",
+                    "1 cup chopped walnuts (optional)"
+                ],
+                instructions: [
+                    "Preheat oven to 375°F and line baking sheets with parchment paper.",
+                    "In bowl, whisk together flour, baking soda, and salt.",
+                    "In large bowl, cream butter with both sugars until light and fluffy.",
+                    "Beat in eggs one at a time, then add vanilla extract.",
+                    "Gradually mix in flour mixture until just combined.",
+                    "Fold in chocolate chips and nuts if using.",
+                    "Drop rounded tablespoons of dough onto baking sheets.",
+                    "Bake 9-11 minutes until golden brown, cool on wire racks."
+                ]
+            }
+        ];
+
+        let currentRecipe = null;
+        let currentStep = 0;
+        let cookingTimer = null;
+        let timerStart = null;
+
+        function initializeRecipes() {
+            const grid = document.getElementById('recipeGrid');
+            grid.innerHTML = '';
+
+            recipes.forEach(recipe => {
+                const card = document.createElement('div');
+                card.className = 'recipe-card';
+                card.onclick = () => openRecipeModal(recipe);
+
+                card.innerHTML = `
+                    <div class="recipe-image">${recipe.emoji}</div>
+                    <div class="recipe-content">
+                        <h3 class="recipe-title">${recipe.title}</h3>
+                        <div class="recipe-meta">
+                            <span>⏱️ ${recipe.time}</span>
+                            <span>👥 ${recipe.servings}</span>
+                        </div>
+                        <p class="recipe-description">${recipe.description}</p>
+                        <div class="recipe-actions">
+                            <button class="btn btn-primary" onclick="event.stopPropagation(); openRecipeModal(recipes[${recipe.id - 1}])">View Recipe</button>
+                            <button class="btn btn-secondary" onclick="event.stopPropagation(); quickStart(recipes[${recipe.id - 1}])">Quick Start</button>
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function openRecipeModal(recipe) {
+            currentRecipe = recipe;
+            currentStep = 0;
+
+            document.getElementById('modalTitle').textContent = recipe.title;
+            document.getElementById('modalTime').textContent = `⏱️ ${recipe.time}`;
+            document.getElementById('modalServings').textContent = `👥 ${recipe.servings}`;
+
+            // Populate ingredients
+            const ingredientsList = document.getElementById('ingredientsList');
+            ingredientsList.innerHTML = '';
+            recipe.ingredients.forEach((ingredient, index) => {
+                const li = document.createElement('li');
+                li.className = 'ingredient-item';
+                li.textContent = ingredient;
+                li.onclick = () => toggleIngredient(li);
+                ingredientsList.appendChild(li);
+            });
+
+            // Populate instructions
+            const instructionsList = document.getElementById('instructionsList');
+            instructionsList.innerHTML = '';
+            recipe.instructions.forEach((instruction, index) => {
+                const li = document.createElement('li');
+                li.className = 'instruction-step';
+                li.textContent = instruction;
+                li.onclick = () => highlightStep(index);
+                instructionsList.appendChild(li);
+            });
+
+            // Reset cooking state
+            document.getElementById('startCookingBtn').style.display = 'inline-block';
+            document.getElementById('nextStepBtn').style.display = 'none';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('timer').textContent = '00:00';
+
+            // Show modal
+            document.getElementById('recipeModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('recipeModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            
+            // Stop timer if running
+            if (cookingTimer) {
+                clearInterval(cookingTimer);
+                cookingTimer = null;
+            }
+            
+            // Reset all highlighted steps
+            const steps = document.querySelectorAll('.instruction-step');
+            steps.forEach(step => step.classList.remove('active'));
+            
+            currentRecipe = null;
+            currentStep = 0;
+        }
+
+        function toggleSection(sectionName) {
+            const content = document.getElementById(`${sectionName}Content`);
+            const toggle = document.getElementById(`${sectionName}Toggle`);
+            
+            if (content.classList.contains('active')) {
+                content.classList.remove('active');
+                toggle.textContent = '▼';
+            } else {
+                content.classList.add('active');
+                toggle.textContent = '▲';
+            }
+        }
+
+        function toggleIngredient(element) {
+            element.style.textDecoration = element.style.textDecoration === 'line-through' ? 'none' : 'line-through';
+            element.style.opacity = element.style.opacity === '0.5' ? '1' : '0.5';
+        }
+
+        function highlightStep(stepIndex) {
+            const steps = document.querySelectorAll('.instruction-step');
+            steps.forEach((step, index) => {
+                step.classList.toggle('active', index === stepIndex);
+            });
+            currentStep = stepIndex;
+            updateProgress();
+        }
+
+        function startCooking() {
+            // Ensure instructions section is open
+            const instructionsContent = document.getElementById('instructionsContent');
+            const instructionsToggle = document.getElementById('instructionsToggle');
+            instructionsContent.classList.add('active');
+            instructionsToggle.textContent = '▲';
+
+            // Start with first step
+            currentStep = 0;
+            highlightStep(0);
+
+            // Show/hide buttons
+            document.getElementById('startCookingBtn').style.display = 'none';
+            document.getElementById('nextStepBtn').style.display = 'inline-block';
+
+            // Start timer
+            timerStart = Date.now();
+            cookingTimer = setInterval(updateTimer, 1000);
+
+            updateProgress();
+        }
+
+        function nextStep() {
+            if (currentStep < currentRecipe.instructions.length - 1) {
+                currentStep++;
+                highlightStep(currentStep);
+                updateProgress();
+            } else {
+                // Cooking complete
+                alert('🎉 Congratulations! Your ' + currentRecipe.title + ' is ready to serve!');
+                document.getElementById('nextStepBtn').textContent = 'Cooking Complete!';
+                document.getElementById('nextStepBtn').disabled = true;
+                
+                // Stop timer
+                if (cookingTimer) {
+                    clearInterval(cookingTimer);
+                    cookingTimer = null;
+                }
+            }
+        }
+
+        function updateProgress() {
+            if (currentRecipe) {
+                const progress = ((currentStep + 1) / currentRecipe.instructions.length) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+            }
+        }
+
+        function updateTimer() {
+            if (timerStart) {
+                const elapsed = Math.floor((Date.now() - timerStart) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('timer').textContent = 
+                    String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+            }
+        }
+
+        function quickStart(recipe) {
+            openRecipeModal(recipe);
+            // Auto-open both sections for quick start
+            setTimeout(() => {
+                toggleSection('ingredients');
+                toggleSection('instructions');
+            }, 300);
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('recipeModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('recipeModal');
+            if (modal.style.display === 'flex') {
+                if (e.key === 'Escape') {
+                    closeModal();
+                } else if (e.key === 'ArrowRight' && currentRecipe) {
+                    e.preventDefault();
+                    if (document.getElementById('nextStepBtn').style.display !== 'none') {
+                        nextStep();
+                    }
+                } else if (e.key === 'Enter' && currentRecipe) {
+                    e.preventDefault();
+                    if (document.getElementById('startCookingBtn').style.display !== 'none') {
+                        startCooking();
+                    }
+                }
+            }
+        });
+
+        // Print functionality
+        function printRecipe() {
+            if (!currentRecipe) return;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>${currentRecipe.title} - Recipe</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+                        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+                        .meta { color: #666; margin-bottom: 20px; }
+                        .section { margin-bottom: 30px; }
+                        .section h2 { color: #34495e; border-left: 4px solid #3498db; padding-left: 10px; }
+                        ul, ol { padding-left: 20px; }
+                        li { margin-bottom: 8px; }
+                        @media print { body { margin: 20px; } }
+                    </style>
+                </head>
+                <body>
+                    <h1>${currentRecipe.title}</h1>
+                    <div class="meta">
+                        <strong>Preparation Time:</strong> ${currentRecipe.time} | 
+                        <strong>Servings:</strong> ${currentRecipe.servings}
+                    </div>
+                    <div class="section">
+                        <h2>Ingredients</h2>
+                        <ul>
+                            ${currentRecipe.ingredients.map(ing => `<li>${ing}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="section">
+                        <h2>Instructions</h2>
+                        <ol>
+                            ${currentRecipe.instructions.map(inst => `<li>${inst}</li>`).join('')}
+                        </ol>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Add print button to modal
+        function addPrintButton() {
+            const modalHeader = document.querySelector('.modal-header');
+            const printBtn = document.createElement('button');
+            printBtn.className = 'btn btn-secondary';
+            printBtn.style.cssText = 'position: absolute; top: 20px; left: 30px; padding: 8px 16px; font-size: 0.8rem;';
+            printBtn.innerHTML = '🖨️ Print';
+            printBtn.onclick = printRecipe;
+            modalHeader.appendChild(printBtn);
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeRecipes();
+            addPrintButton();
+            
+            // Auto-open ingredients section by default
+            setTimeout(() => {
+                toggleSection('ingredients');
+            }, 500);
+        });
+
+        // Add search functionality
+        function addSearchFeature() {
+            const header = document.querySelector('.header');
+            const searchContainer = document.createElement('div');
+            searchContainer.style.cssText = 'margin-top: 20px; max-width: 500px; margin-left: auto; margin-right: auto;';
+            
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.placeholder = 'Search recipes by name or ingredient...';
+            searchInput.style.cssText = `
+                width: 100%; 
+                padding: 15px 20px; 
+                border: none; 
+                border-radius: 25px; 
+                font-size: 1rem; 
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                outline: none;
+            `;
+            
+            searchInput.addEventListener('input', function(e) {
+                const query = e.target.value.toLowerCase();
+                const cards = document.querySelectorAll('.recipe-card');
+                
+                cards.forEach((card, index) => {
+                    const recipe = recipes[index];
+                    const titleMatch = recipe.title.toLowerCase().includes(query);
+                    const ingredientMatch = recipe.ingredients.some(ing => 
+                        ing.toLowerCase().includes(query)
+                    );
+                    
+                    if (titleMatch || ingredientMatch || query === '') {
+                        card.style.display = 'block';
+                        card.style.animation = 'fadeInUp 0.3s ease-out';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+            
+            searchContainer.appendChild(searchInput);
+            header.appendChild(searchContainer);
+        }
+
+        // Add the search feature
+        document.addEventListener('DOMContentLoaded', function() {
+            addSearchFeature();
+        });
+    </script>
+</body>
+</html>
